@@ -1,24 +1,28 @@
+let formData = {
+  email: '',
+  message: '',
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const formElem = document.querySelector('.feedback-form');
 
-  let formData = {
-    email: '',
-    message: '',
-  };
-
-  const lsData = getFromLS('feedbackFromState');
-  if (lsData && typeof lsData === 'object') {
-    formData = lsData;
-    formElem.elements.email.value = lsData.email || '';
-    formElem.elements.message.value = lsData.message || '';
+  const savedData = getFromLS('feedbackFromState');
+  if (
+    savedData &&
+    typeof savedData === 'object' &&
+    'email' in savedData &&
+    'message' in savedData
+  ) {
+    formData = savedData;
+    formElem.elements.email.value = savedData.email || '';
+    formElem.elements.message.value = savedData.message || '';
   }
 
   formElem.addEventListener('input', e => {
-    const email = e.currentTarget.elements.email.value;
-    const message = e.currentTarget.elements.message.value;
+    const { email, message } = formElem.elements;
 
-    formData.email = email;
-    formData.message = message;
+    formData.email = email.value;
+    formData.message = message.value;
 
     saveToLS('feedbackFromState', formData);
   });
@@ -30,36 +34,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageValue = formElem.elements.message.value.trim();
 
     if (emailValue === '' || messageValue === '') {
-      alert('Fill please all fields');
+      alert('Please fill in all fields');
       return;
     }
 
     formData.email = emailValue;
     formData.message = messageValue;
-    saveToLS('feedbackFromState', formData);
 
     console.dir(formData);
+
     localStorage.removeItem('feedbackFromState');
     formElem.reset();
-
     formData = {
       email: '',
       message: '',
     };
-  });
 
-  function saveToLS(key, value) {
+    alert('Message sent successfully!');
+  });
+});
+
+function saveToLS(key, value) {
+  try {
     const jsonData = JSON.stringify(value);
     localStorage.setItem(key, jsonData);
+  } catch (err) {
+    console.error('Save to localStorage failed:', err);
   }
+}
 
-  function getFromLS(key, defaultValue) {
+function getFromLS(key, defaultValue = {}) {
+  try {
     const jsonData = localStorage.getItem(key);
-    try {
-      const data = JSON.parse(jsonData);
-      return data;
-    } catch {
-      return defaultValue || jsonData;
-    }
+    return JSON.parse(jsonData) || defaultValue;
+  } catch {
+    return defaultValue;
   }
-});
+}
